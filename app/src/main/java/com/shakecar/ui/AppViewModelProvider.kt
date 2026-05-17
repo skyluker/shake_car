@@ -107,12 +107,12 @@ class AnalysisViewModel(private val repo: SessionRepository) : ViewModel() {
 
 
 
+@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class TrendViewModel(private val repo: SessionRepository) : ViewModel() {
     private val _vehicleId = MutableStateFlow<Long>(-1)
 
     fun setVehicle(id: Long) { _vehicleId.value = id }
 
-    @kotlinx.coroutines.ExperimentalCoroutinesApi
     val sessions: StateFlow<List<com.shakecar.data.SessionEntity>> = _vehicleId
         .flatMapLatest { vid ->
             if (vid < 0) kotlinx.coroutines.flow.flowOf(emptyList())

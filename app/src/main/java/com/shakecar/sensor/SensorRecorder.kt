@@ -43,14 +43,16 @@ class SensorRecorder(private val context: Context) {
         if (acc == null) { close(); return@callbackFlow }
 
         // Domyślnie pion w dół układu telefonu (Z-up).
-        @Volatile var gx = 0f
-        @Volatile var gy = 0f
-        @Volatile var gz = 9.81f
-        @Volatile var rx = 0f
-        @Volatile var ry = 0f
-        @Volatile var rz = 0f
-        @Volatile var speedKmh = Float.NaN
-        @Volatile var gpsAcc = Float.NaN
+        // Zwykłe var bez @Volatile - wszystkie callbacki sensorów i lokalizacji
+        // chodzą na tym samym wątku (main looper), więc nie ma wyścigu.
+        var gx = 0f
+        var gy = 0f
+        var gz = 9.81f
+        var rx = 0f
+        var ry = 0f
+        var rz = 0f
+        var speedKmh = Float.NaN
+        var gpsAcc = Float.NaN
 
         val listener = object : SensorEventListener {
             override fun onSensorChanged(event: SensorEvent) {
