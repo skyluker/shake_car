@@ -48,5 +48,7 @@ data class SessionEntity(
     val suspensionScore: Float? = null,
     val bandEnergiesCsv: String? = null,
     val rawFilePath: String? = null,
+    val surfaceType: String? = null,
+    val surfaceConfidence: Float? = null,
     val notes: String? = null,
 )

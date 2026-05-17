@@ -2,6 +2,7 @@ package com.shakecar.data
 
 import com.shakecar.domain.AnalysisResult
 import com.shakecar.domain.FrequencyBand
+import com.shakecar.domain.SurfaceClassifier
 import kotlinx.coroutines.flow.Flow
 
 class SessionRepository(
@@ -34,6 +35,7 @@ class SessionRepository(
         notes: String? = null,
     ) {
         val existing = sessionDao.getById(sessionId) ?: return
+        val surface = result?.let { SurfaceClassifier.classify(it) }
         val updated = existing.copy(
             endedAt = System.currentTimeMillis(),
             avgSpeedKmh = result?.avgSpeedKmh?.takeIf { !it.isNaN() },
@@ -52,6 +54,8 @@ class SessionRepository(
                 FrequencyBand.values().joinToString(",") { b -> "%.6f".format(be[b] ?: 0f) }
             },
             rawFilePath = rawFilePath,
+            surfaceType = surface?.type?.name,
+            surfaceConfidence = surface?.confidence,
             notes = notes,
         )
         sessionDao.update(updated)

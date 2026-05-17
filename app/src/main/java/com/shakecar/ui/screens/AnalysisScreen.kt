@@ -20,6 +20,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.shakecar.domain.FrequencyBand
 import com.shakecar.domain.Severity
+import com.shakecar.domain.SurfaceClassifier
 import com.shakecar.sensor.RecordingController
 import com.shakecar.ui.AnalysisViewModel
 import com.shakecar.ui.AppViewModels
@@ -34,6 +35,7 @@ fun AnalysisScreen(sessionId: Long, nav: NavController) {
     val findings by vm.findings.collectAsState()
     val exportStatus by vm.exportStatus.collectAsState()
     val result = remember { RecordingController.lastResult() }
+    val surface = remember(result) { result?.let { SurfaceClassifier.classify(it) } }
 
     LaunchedEffect(result) { result?.let { vm.computeFindings(it) } }
 
@@ -70,6 +72,27 @@ fun AnalysisScreen(sessionId: Long, nav: NavController) {
                     Spacer(Modifier.height(4.dp))
                     Text("Score komfortu: %.0f / 100".format(result.comfortScore))
                     Text("Score zawieszenia: %.0f / 100".format(result.suspensionScore))
+                }
+            }
+
+            surface?.let { sd ->
+                Card {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text("Wykryta nawierzchnia", style = MaterialTheme.typography.titleSmall)
+                        Text(sd.type.label, style = MaterialTheme.typography.titleMedium)
+                        Text("Pewność: %.0f%%".format(sd.confidence * 100))
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            "centroid %.1f Hz · flatness %.2f · low %.0f%% · mid %.0f%% · high %.0f%%".format(
+                                sd.features.spectralCentroid,
+                                sd.features.spectralFlatness,
+                                sd.features.lowBandFraction * 100,
+                                sd.features.midBandFraction * 100,
+                                sd.features.highBandFraction * 100,
+                            ),
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
                 }
             }
 

@@ -5,6 +5,7 @@ import android.net.Uri
 import com.shakecar.domain.AnalysisResult
 import com.shakecar.domain.FrequencyBand
 import com.shakecar.domain.SensorSample
+import com.shakecar.domain.SurfaceClassifier
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.OutputStreamWriter
@@ -96,6 +97,22 @@ object SessionExporter {
                     })
                 }
                 put("bands", bands)
+                val surface = SurfaceClassifier.classify(result)
+                put("surface", JSONObject().apply {
+                    put("type", surface.type.name)
+                    put("label", surface.type.label)
+                    put("confidence", surface.confidence.toDouble())
+                    put("features", JSONObject().apply {
+                        put("totalEnergy", surface.features.totalEnergy.toDouble())
+                        put("lowBandFraction", surface.features.lowBandFraction.toDouble())
+                        put("midBandFraction", surface.features.midBandFraction.toDouble())
+                        put("highBandFraction", surface.features.highBandFraction.toDouble())
+                        put("spectralFlatness", surface.features.spectralFlatness.toDouble())
+                        put("spectralCentroid", surface.features.spectralCentroid.toDouble())
+                        put("crestFactor", surface.features.crestFactor.toDouble())
+                        put("rms", surface.features.rms.toDouble())
+                    })
+                })
             })
         }
         cr.openOutputStream(uri)?.use { os ->

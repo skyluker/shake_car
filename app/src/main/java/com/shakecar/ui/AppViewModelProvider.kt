@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -39,6 +40,7 @@ object AppViewModels {
         initializer { RecordViewModel(repo()) }
         initializer { SessionsViewModel(repo()) }
         initializer { AnalysisViewModel(repo()) }
+        initializer { TrendViewModel(repo()) }
     }
 }
 
@@ -101,4 +103,20 @@ class AnalysisViewModel(private val repo: SessionRepository) : ViewModel() {
             _exportStatus.value = "Błąd JSON: ${e.message}"
         }
     }
+}
+
+
+
+class TrendViewModel(private val repo: SessionRepository) : ViewModel() {
+    private val _vehicleId = MutableStateFlow<Long>(-1)
+
+    fun setVehicle(id: Long) { _vehicleId.value = id }
+
+    @kotlinx.coroutines.ExperimentalCoroutinesApi
+    val sessions: StateFlow<List<com.shakecar.data.SessionEntity>> = _vehicleId
+        .flatMapLatest { vid ->
+            if (vid < 0) kotlinx.coroutines.flow.flowOf(emptyList())
+            else repo.observeSessionsForVehicle(vid)
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 }

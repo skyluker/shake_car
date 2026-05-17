@@ -42,6 +42,7 @@ fun VehicleScreen(nav: NavController) {
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             FilledTonalButton(onClick = { nav.navigate("record/${v.id}") }) { Text("Nagraj") }
                             OutlinedButton(onClick = { nav.navigate("sessions/${v.id}") }) { Text("Sesje") }
+                            OutlinedButton(onClick = { nav.navigate("trend/${v.id}") }) { Text("Trend") }
                         }
                     }
                 }

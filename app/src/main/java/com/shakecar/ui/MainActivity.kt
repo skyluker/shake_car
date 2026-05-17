@@ -13,6 +13,7 @@ import androidx.navigation.compose.rememberNavController
 import com.shakecar.ui.screens.AnalysisScreen
 import com.shakecar.ui.screens.RecordScreen
 import com.shakecar.ui.screens.SessionsScreen
+import com.shakecar.ui.screens.TrendScreen
 import com.shakecar.ui.screens.VehicleScreen
 
 class MainActivity : ComponentActivity() {
@@ -31,6 +32,10 @@ class MainActivity : ComponentActivity() {
                         composable("sessions/{vehicleId}") { entry ->
                             val vid = entry.arguments?.getString("vehicleId")?.toLongOrNull() ?: 0L
                             SessionsScreen(vehicleId = vid, nav = nav)
+                        }
+                        composable("trend/{vehicleId}") { entry ->
+                            val vid = entry.arguments?.getString("vehicleId")?.toLongOrNull() ?: 0L
+                            TrendScreen(vehicleId = vid, nav = nav)
                         }
                         composable("analysis/{sessionId}") { entry ->
                             val sid = entry.arguments?.getString("sessionId")?.toLongOrNull() ?: 0L
