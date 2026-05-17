@@ -11,6 +11,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -21,6 +22,7 @@ import com.shakecar.sensor.RecordingController
 import com.shakecar.sensor.RecordingService
 import com.shakecar.ui.AppViewModels
 import com.shakecar.ui.RecordViewModel
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -31,15 +33,20 @@ fun RecordScreen(vehicleId: Long, nav: NavController) {
     var mileage by remember { mutableStateOf("") }
     var road by remember { mutableStateOf("asfalt") }
     val sessionId by vm.sessionId.collectAsState()
+    val coScope = rememberCoroutineScope()
 
-    val notifLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
+    val permLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) {}
 
     LaunchedEffect(Unit) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            val granted = ContextCompat.checkSelfPermission(ctx, Manifest.permission.POST_NOTIFICATIONS) ==
-                PackageManager.PERMISSION_GRANTED
-            if (!granted) notifLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-        }
+        val needed = mutableListOf<String>()
+        if (ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACCESS_FINE_LOCATION) !=
+            PackageManager.PERMISSION_GRANTED) needed += Manifest.permission.ACCESS_FINE_LOCATION
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(ctx, Manifest.permission.POST_NOTIFICATIONS) !=
+            PackageManager.PERMISSION_GRANTED) needed += Manifest.permission.POST_NOTIFICATIONS
+        if (needed.isNotEmpty()) permLauncher.launch(needed.toTypedArray())
     }
 
     Scaffold(topBar = { TopAppBar(title = { Text("Nagrywanie") }) }) { padding ->
@@ -51,8 +58,9 @@ fun RecordScreen(vehicleId: Long, nav: NavController) {
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Text(
-                "Przyklej telefon stabilnie do nadwozia (np. uchwyt na podsufitce lub konsoli). " +
-                    "Jed\u017a r\u00f3wnomiernie 60-90 km/h przez ~60 sekund po jednolitej nawierzchni.",
+                "Przyklej telefon stabilnie do nadwozia. Aplikacja sama wykryje pion z TYPE_GRAVITY. " +
+                    "Włącz GPS - próbki ze zmianą prędkości będą automatycznie odsiewane (stabilne okna ≥30 km/h, " +
+                    "σ ≤ 5 km/h przez 5 s). Najlepiej jechać 60-90 km/h przez ~60 s.",
                 style = MaterialTheme.typography.bodyMedium,
             )
             OutlinedTextField(mileage, { mileage = it }, label = { Text("Przebieg (km)") }, modifier = Modifier.fillMaxWidth())
@@ -61,9 +69,9 @@ fun RecordScreen(vehicleId: Long, nav: NavController) {
             Card {
                 Column(Modifier.padding(16.dp)) {
                     Text("Stan: ${if (state.recording) "NAGRYWANIE" else "STOP"}")
-                    Text("Pr\u00f3bek: ${state.sampleCount}")
+                    Text("Próbek: ${state.sampleCount}")
                     Text("Czas: %.1f s".format(state.elapsedSec))
-                    Text("Cz\u0119stotliwo\u015b\u0107: %.0f Hz".format(state.lastSampleRateHz))
+                    Text("Częstotliwość: %.0f Hz".format(state.lastSampleRateHz))
                 }
             }
 
@@ -79,9 +87,15 @@ fun RecordScreen(vehicleId: Long, nav: NavController) {
             } else {
                 Button(
                     onClick = {
-                        val result = RecordingController.stop()
-                        ctx.stopService(Intent(ctx, RecordingService::class.java))
-                        vm.finishSession(result, notes = null)
+                        coScope.launch {
+                            val result = RecordingController.stop()
+                            ctx.stopService(Intent(ctx, RecordingService::class.java))
+                            vm.finishSession(
+                                result = result,
+                                rawFilePath = RecordingController.state.value.rawFilePath,
+                                notes = null,
+                            )
+                        }
                     },
                     modifier = Modifier.fillMaxWidth(),
                 ) { Text("Stop i analizuj") }

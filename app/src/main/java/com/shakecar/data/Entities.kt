@@ -35,9 +35,9 @@ data class SessionEntity(
     val mileageKm: Int? = null,
     val roadType: String? = null,
     val avgSpeedKmh: Float? = null,
+    val acceptedFraction: Float? = null,
     val durationSec: Float? = null,
     val sampleRateHz: Float? = null,
-    // Skalary z analizy
     val rmsVertical: Float? = null,
     val rmsWeighted: Float? = null,
     val crestFactor: Float? = null,
@@ -46,7 +46,7 @@ data class SessionEntity(
     val dampingRatio: Float? = null,
     val comfortScore: Float? = null,
     val suspensionScore: Float? = null,
-    // Sp\u0142aszczone PSD - lekka serializacja CSV pasm
     val bandEnergiesCsv: String? = null,
+    val rawFilePath: String? = null,
     val notes: String? = null,
 )

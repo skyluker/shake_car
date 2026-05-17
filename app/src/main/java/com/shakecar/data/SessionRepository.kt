@@ -29,14 +29,15 @@ class SessionRepository(
 
     suspend fun finishSession(
         sessionId: Long,
-        avgSpeedKmh: Float?,
         result: AnalysisResult?,
+        rawFilePath: String?,
         notes: String? = null,
     ) {
         val existing = sessionDao.getById(sessionId) ?: return
         val updated = existing.copy(
             endedAt = System.currentTimeMillis(),
-            avgSpeedKmh = avgSpeedKmh,
+            avgSpeedKmh = result?.avgSpeedKmh?.takeIf { !it.isNaN() },
+            acceptedFraction = result?.acceptedFraction,
             durationSec = result?.durationSec,
             sampleRateHz = result?.sampleRateHz,
             rmsVertical = result?.rmsVertical,
@@ -50,6 +51,7 @@ class SessionRepository(
             bandEnergiesCsv = result?.bandEnergy?.let { be ->
                 FrequencyBand.values().joinToString(",") { b -> "%.6f".format(be[b] ?: 0f) }
             },
+            rawFilePath = rawFilePath,
             notes = notes,
         )
         sessionDao.update(updated)
